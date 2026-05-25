@@ -5,7 +5,7 @@
 [![ADK-Rust Enterprise](https://img.shields.io/badge/ADK--Rust-Enterprise-purple.svg)](https://enterprise.adk-rust.com)
 [![Registry Ready](https://img.shields.io/badge/ADK_Registry-Ready-green.svg)](https://www.zavora.ai)
 
-Unified CRM MCP server with **20 tools** across **4 backends** — Salesforce, HubSpot, Zoho CRM, and Pipedrive. Contacts, companies, deals, activities, pipelines, and notes with a single consistent schema.
+The most complete multi-backend CRM MCP server. **20 tools** across **4 backends** — Salesforce, HubSpot, Zoho CRM, and Pipedrive. Unified contacts, companies, deals, activities, pipelines, and notes. Single Rust binary with feature-flagged backends and enterprise governance.
 
 ## Architecture
 
@@ -15,31 +15,109 @@ Unified CRM MCP server with **20 tools** across **4 backends** — Salesforce, H
 
 ## Key Principles
 
-- **Unified schema** — agents see consistent types regardless of backend
-- **Feature-flagged backends** — compile only what you need
-- **Full CRM lifecycle** — contacts, companies, deals, activities, pipelines, notes
-- **No credential exposure** — tokens stay in env vars
-- **Single binary** — no Node.js, no Python
+- **Unified schema** — agents see consistent types (Contact, Company, Deal, Activity, Pipeline, Note) regardless of backend
+- **Feature-flagged backends** — compile only what you need (`--features salesforce,hubspot`)
+- **Full CRM lifecycle** — search contacts, manage deals through pipeline stages, log activities, attach notes
+- **No credential exposure** — tokens stay in env vars, never reach LLM context
+- **Single binary** — no Node.js, no Python, no runtime dependencies
+
+## Comparison
+
+| Feature | Generic REST | Zapier | **mcp-crm** |
+|---------|:---:|:---:|:---:|
+| Multi-backend (4 CRMs) | ❌ | Partial | ✅ |
+| Unified schema | ❌ | ❌ | ✅ |
+| Pipeline stage management | ❌ | ❌ | ✅ |
+| Contact search | ❌ | ❌ | ✅ |
+| Activity logging | ❌ | Partial | ✅ |
+| Risk classification | ❌ | ❌ | ✅ |
+| Agent-native (MCP) | ❌ | ❌ | ✅ |
+| Single binary | ❌ | ❌ | ✅ |
 
 ## Tools (20)
 
-| Category | Tools | Risk |
-|----------|-------|------|
-| Contacts | `list_contacts`, `get_contact`, `create_contact`, `update_contact`, `search_contacts` | read / internal_write |
-| Companies | `list_companies`, `get_company`, `create_company`, `update_company` | read / internal_write |
-| Deals | `list_deals`, `get_deal`, `create_deal`, `update_deal`, `move_deal_stage` | read / internal_write |
-| Activities | `list_activities`, `create_activity` | read / internal_write |
-| Pipelines | `list_pipelines`, `get_pipeline_summary` | read_only |
-| Notes | `list_notes`, `create_note` | read / internal_write |
+### Contacts (5)
+
+| Tool | Purpose | Risk Class |
+|------|---------|------------|
+| `list_contacts` | List contacts with optional limit | Read-only |
+| `get_contact` | Get a contact by ID | Read-only |
+| `create_contact` | Create a new contact | Internal write |
+| `update_contact` | Update an existing contact | Internal write |
+| `search_contacts` | Search by name, email, or query | Read-only |
+
+### Companies (4)
+
+| Tool | Purpose | Risk Class |
+|------|---------|------------|
+| `list_companies` | List companies/accounts | Read-only |
+| `get_company` | Get a company by ID | Read-only |
+| `create_company` | Create a new company | Internal write |
+| `update_company` | Update an existing company | Internal write |
+
+### Deals (5)
+
+| Tool | Purpose | Risk Class |
+|------|---------|------------|
+| `list_deals` | List deals/opportunities | Read-only |
+| `get_deal` | Get a deal with stage, value, probability | Read-only |
+| `create_deal` | Create a new deal | Internal write |
+| `update_deal` | Update deal (stage, value, close date) | Internal write |
+| `move_deal_stage` | Move a deal to a different pipeline stage | Internal write |
+
+### Activities (2)
+
+| Tool | Purpose | Risk Class |
+|------|---------|------------|
+| `list_activities` | List activities for a contact or deal | Read-only |
+| `create_activity` | Log a call, email, meeting, task, or note | Internal write |
+
+### Pipelines (2)
+
+| Tool | Purpose | Risk Class |
+|------|---------|------------|
+| `list_pipelines` | List sales pipelines and their stages | Read-only |
+| `get_pipeline_summary` | Get deal counts and values per stage | Read-only |
+
+### Notes (2)
+
+| Tool | Purpose | Risk Class |
+|------|---------|------------|
+| `list_notes` | List notes for a contact, company, or deal | Read-only |
+| `create_note` | Add a note to a record | Internal write |
 
 ## Backends
 
-| Backend | Auth | Env Vars |
-|---------|------|----------|
-| **Salesforce** | OAuth2 | `SALESFORCE_INSTANCE_URL`, `SALESFORCE_TOKEN` |
-| **HubSpot** | API key / OAuth | `HUBSPOT_TOKEN` |
-| **Zoho CRM** | OAuth2 | `ZOHO_CRM_TOKEN` |
-| **Pipedrive** | API token | `PIPEDRIVE_TOKEN` |
+| Backend | Protocol | Auth | Default Feature |
+|---------|----------|------|:---:|
+| **Salesforce** | REST v59.0 + SOQL | OAuth2 | ❌ |
+| **HubSpot** | CRM API v3 | Private App Token | ✅ |
+| **Zoho CRM** | REST API v2 | OAuth2 | ❌ |
+| **Pipedrive** | REST API v1 | API Token | ✅ |
+
+### Backend Capabilities
+
+| Capability | Salesforce | HubSpot | Zoho CRM | Pipedrive |
+|-----------|:---:|:---:|:---:|:---:|
+| Contacts CRUD | ✅ | ✅ | ✅ | ✅ |
+| Contact search | ✅ (SOQL) | ✅ (native) | ✅ (criteria) | ✅ (term) |
+| Companies CRUD | ✅ | ✅ | ✅ | ✅ |
+| Deals CRUD | ✅ | ✅ | ✅ | ✅ |
+| Pipeline stages | ✅ | ✅ | ✅ | ✅ (with counts) |
+| Activities | ✅ (Task) | ✅ (Engagement) | ✅ (Task) | ✅ (Activity) |
+| Notes | ✅ | ✅ | ✅ | ✅ |
+| Deal associations | ✅ | ✅ | ✅ | ✅ |
+
+### API Mapping
+
+| Entity | Salesforce | HubSpot | Zoho CRM | Pipedrive |
+|--------|-----------|---------|----------|-----------|
+| Contact | Contact | contacts | Contacts | persons |
+| Company | Account | companies | Accounts | organizations |
+| Deal | Opportunity | deals | Deals | deals |
+| Activity | Task | tasks/engagements | Tasks | activities |
+| Note | Note | notes | Notes | notes |
+| Pipeline | OpportunityStage | pipelines | settings/pipeline | pipelines + stages |
 
 ## Installation
 
@@ -47,22 +125,58 @@ Unified CRM MCP server with **20 tools** across **4 backends** — Salesforce, H
 cargo install mcp-crm --features all-backends
 ```
 
+Or build from source:
+
+```bash
+git clone https://github.com/zavora-ai/mcp-crm
+cd mcp-crm
+cargo build --release --features all-backends
+```
+
 ### Feature flags
 
 ```bash
-# Default: HubSpot + Pipedrive
+# Default: HubSpot + Pipedrive (lightest, token-based auth)
 cargo install mcp-crm
 
 # All backends
 cargo install mcp-crm --features all-backends
 
-# Specific
+# Specific backends
 cargo install mcp-crm --no-default-features --features salesforce
+cargo install mcp-crm --no-default-features --features "hubspot,zoho-crm"
+```
+
+## Configuration
+
+### Salesforce
+
+```bash
+export SALESFORCE_INSTANCE_URL="https://yourorg.my.salesforce.com"
+export SALESFORCE_TOKEN="00D..."
+```
+
+### HubSpot
+
+```bash
+export HUBSPOT_TOKEN="pat-na1-xxxxxxxx"
+```
+
+### Zoho CRM
+
+```bash
+export ZOHO_CRM_TOKEN="1000.xxxxxxxx"
+```
+
+### Pipedrive
+
+```bash
+export PIPEDRIVE_TOKEN="xxxxxxxxxxxxxxxx"
 ```
 
 ## Client Configuration
 
-### Claude Desktop / Kiro / Cursor
+### Claude Desktop
 
 ```json
 {
@@ -78,8 +192,64 @@ cargo install mcp-crm --no-default-features --features salesforce
 }
 ```
 
+### Kiro
+
+Add to `.kiro/settings/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "crm": {
+      "command": "mcp-crm",
+      "args": [],
+      "env": {
+        "PIPEDRIVE_TOKEN": "xxxx"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "crm": {
+      "command": "mcp-crm",
+      "args": [],
+      "env": {
+        "SALESFORCE_INSTANCE_URL": "https://yourorg.my.salesforce.com",
+        "SALESFORCE_TOKEN": "00D..."
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "crm": {
+      "command": "mcp-crm",
+      "args": [],
+      "env": {
+        "ZOHO_CRM_TOKEN": "1000.xxxx"
+      }
+    }
+  }
+}
+```
+
 ## Usage Examples
 
+### Contact management
 ```
 "List my top 10 contacts"
 → list_contacts(limit: 10)
@@ -87,35 +257,71 @@ cargo install mcp-crm --no-default-features --features salesforce
 "Search for contacts at Acme Corp"
 → search_contacts(query: "Acme")
 
-"Create a deal for $50k in the Negotiation stage"
+"Create a contact for Sarah Chen at Acme, email sarah@acme.com"
+→ create_contact(first_name: "Sarah", last_name: "Chen", email: "sarah@acme.com")
+```
+
+### Deal pipeline
+```
+"Show me all open deals"
+→ list_deals(limit: 50)
+
+"Create a $50k deal for the Acme enterprise contract"
 → create_deal(name: "Acme Enterprise", amount: 50000, stage: "Negotiation")
 
-"Move the deal to Closed Won"
+"Move the Acme deal to Closed Won"
 → move_deal_stage(id: "deal-123", stage: "closedwon")
 
-"Log a call with Sarah about the proposal"
-→ create_activity(activity_type: "call", subject: "Proposal discussion", contact_id: "sarah-id")
-
-"Show me the pipeline summary"
+"What does our pipeline look like?"
 → get_pipeline_summary()
 ```
 
+### Activity logging
+```
+"Log a call with Sarah about the proposal"
+→ create_activity(activity_type: "call", subject: "Proposal discussion", contact_id: "sarah-id")
+
+"Show all activities for the Acme deal"
+→ list_activities(deal_id: "deal-123")
+```
+
+### Notes
+```
+"Add a note to the Acme deal: 'Budget approved by CFO'"
+→ create_note(content: "Budget approved by CFO", deal_id: "deal-123")
+```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/assets/architecture.svg) | System diagram |
+| [mcp-server.toml](mcp-server.toml) | ADK-Rust Enterprise registry manifest |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [LICENSE](LICENSE) | Apache-2.0 license |
+
 ## Registry Compliance
 
-- **HealthCheck** — verifies backend connectivity
-- **mcp-server.toml** — 20 tools with risk classes and credential bindings
-- **Manifest validation** — startup fails fast on invalid manifest
-- **Structured tracing** — `RUST_LOG` env-filter
+This server implements the [ADK MCP SDK](https://crates.io/crates/adk-mcp-sdk) contract:
+
+- **HealthCheck** — verifies backend connectivity on startup
+- **mcp-server.toml** — manifest with 20 tools, risk classes, and credential bindings
+- **Manifest validation** — startup fails fast on invalid manifest (SDK 0.1.3+)
+- **Structured tracing** — `RUST_LOG` env-filter for observability
 
 ## Contributors
 
+<!-- ALL-CONTRIBUTORS-LIST:START -->
 | [<img src="https://github.com/jkmaina.png" width="80px;" alt=""/><br /><sub><b>James Karanja Maina</b></sub>](https://github.com/jkmaina) |
 |:---:|
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## License
 
-Apache-2.0
+Apache-2.0 — see [LICENSE](LICENSE) for details.
 
 ---
 
 Part of the [ADK-Rust Enterprise](https://enterprise.adk-rust.com) MCP server ecosystem.
+
+Built with ❤️ by [Zavora AI](https://zavora.ai)

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" font-family="system-ui,-apple-system,sans-serif" font-size="13">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
+  </defs>
+  <rect width="900" height="480" fill="url(#bg)" rx="12"/>
+  <text x="450" y="35" text-anchor="middle" fill="#f8fafc" font-size="18" font-weight="bold">mcp-crm — Architecture</text>
+
+  <!-- MCP Client -->
+  <rect x="360" y="55" width="180" height="45" rx="8" fill="#7c3aed" opacity="0.9"/>
+  <text x="450" y="83" text-anchor="middle" fill="#fff" font-weight="600">MCP Client (Agent)</text>
+
+  <!-- Arrow -->
+  <path d="M450 100 L450 130" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>
+  <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#94a3b8"/></marker></defs>
+
+  <!-- Server box -->
+  <rect x="150" y="135" width="600" height="150" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+  <text x="450" y="158" text-anchor="middle" fill="#a78bfa" font-weight="bold" font-size="14">mcp-crm (stdio)</text>
+
+  <!-- Tool categories -->
+  <rect x="170" y="170" width="110" height="28" rx="5" fill="#1e40af" opacity="0.7"/><text x="225" y="189" text-anchor="middle" fill="#bfdbfe" font-size="11">Contacts (5)</text>
+  <rect x="290" y="170" width="120" height="28" rx="5" fill="#1e40af" opacity="0.7"/><text x="350" y="189" text-anchor="middle" fill="#bfdbfe" font-size="11">Companies (4)</text>
+  <rect x="420" y="170" width="90" height="28" rx="5" fill="#7e22ce" opacity="0.6"/><text x="465" y="189" text-anchor="middle" fill="#e9d5ff" font-size="11">Deals (5)</text>
+  <rect x="520" y="170" width="110" height="28" rx="5" fill="#0d9488" opacity="0.7"/><text x="575" y="189" text-anchor="middle" fill="#ccfbf1" font-size="11">Activities (2)</text>
+  <rect x="640" y="170" width="90" height="28" rx="5" fill="#334155"/><text x="685" y="189" text-anchor="middle" fill="#94a3b8" font-size="11">Pipelines (2)</text>
+
+  <rect x="170" y="205" width="90" height="28" rx="5" fill="#b45309" opacity="0.6"/><text x="215" y="224" text-anchor="middle" fill="#fde68a" font-size="11">Notes (2)</text>
+
+  <!-- CrmBackend trait -->
+  <rect x="350" y="245" width="200" height="22" rx="4" fill="#065f46" opacity="0.8"/><text x="450" y="261" text-anchor="middle" fill="#6ee7b7" font-size="11" font-style="italic">CrmBackend trait (20 methods)</text>
+
+  <!-- Arrows to backends -->
+  <path d="M450 285 L450 310" stroke="#94a3b8" stroke-width="1.5"/>
+  <path d="M450 310 L170 350" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
+  <path d="M450 310 L350 350" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
+  <path d="M450 310 L540 350" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
+  <path d="M450 310 L720 350" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
+
+  <!-- Backend boxes -->
+  <rect x="90" y="350" width="160" height="70" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="170" y="375" text-anchor="middle" fill="#60a5fa" font-weight="bold" font-size="12">Salesforce</text>
+  <text x="170" y="393" text-anchor="middle" fill="#94a3b8" font-size="10">REST API v59.0 + SOQL</text>
+  <text x="170" y="408" text-anchor="middle" fill="#64748b" font-size="10">OAuth2</text>
+
+  <rect x="270" y="350" width="160" height="70" rx="8" fill="#1e293b" stroke="#f97316" stroke-width="1.5"/>
+  <text x="350" y="375" text-anchor="middle" fill="#fb923c" font-weight="bold" font-size="12">HubSpot</text>
+  <text x="350" y="393" text-anchor="middle" fill="#94a3b8" font-size="10">CRM API v3</text>
+  <text x="350" y="408" text-anchor="middle" fill="#64748b" font-size="10">Private App Token</text>
+
+  <rect x="460" y="350" width="160" height="70" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="540" y="375" text-anchor="middle" fill="#fbbf24" font-weight="bold" font-size="12">Zoho CRM</text>
+  <text x="540" y="393" text-anchor="middle" fill="#94a3b8" font-size="10">REST API v2</text>
+  <text x="540" y="408" text-anchor="middle" fill="#64748b" font-size="10">OAuth2</text>
+
+  <rect x="640" y="350" width="160" height="70" rx="8" fill="#1e293b" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="720" y="375" text-anchor="middle" fill="#4ade80" font-weight="bold" font-size="12">Pipedrive</text>
+  <text x="720" y="393" text-anchor="middle" fill="#94a3b8" font-size="10">REST API v1</text>
+  <text x="720" y="408" text-anchor="middle" fill="#64748b" font-size="10">API Token</text>
+
+  <!-- Entity flow -->
+  <rect x="90" y="440" width="710" height="28" rx="6" fill="#1e293b" stroke="#334155"/>
+  <text x="120" y="458" fill="#94a3b8" font-size="11">Entities:</text>
+  <rect x="190" y="445" width="70" height="18" rx="3" fill="#1e40af" opacity="0.5"/><text x="225" y="458" text-anchor="middle" fill="#bfdbfe" font-size="10">Contact</text>
+  <rect x="270" y="445" width="75" height="18" rx="3" fill="#1e40af" opacity="0.5"/><text x="307" y="458" text-anchor="middle" fill="#bfdbfe" font-size="10">Company</text>
+  <rect x="355" y="445" width="50" height="18" rx="3" fill="#7e22ce" opacity="0.5"/><text x="380" y="458" text-anchor="middle" fill="#e9d5ff" font-size="10">Deal</text>
+  <rect x="415" y="445" width="60" height="18" rx="3" fill="#0d9488" opacity="0.5"/><text x="445" y="458" text-anchor="middle" fill="#ccfbf1" font-size="10">Activity</text>
+  <rect x="485" y="445" width="65" height="18" rx="3" fill="#334155"/><text x="517" y="458" text-anchor="middle" fill="#94a3b8" font-size="10">Pipeline</text>
+  <rect x="560" y="445" width="50" height="18" rx="3" fill="#b45309" opacity="0.5"/><text x="585" y="458" text-anchor="middle" fill="#fde68a" font-size="10">Note</text>
+</svg>
