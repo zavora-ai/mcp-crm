@@ -163,4 +163,38 @@ impl CrmBackend for SalesforceBackend {
         let resp = self.post("sobjects/Note", &serde_json::json!({"Body": content, "ParentId": parent, "Title": "Note"})).await?;
         Ok(Note { id: resp["id"].as_str().unwrap_or("").into(), content: content.into(), contact_id: contact_id.map(Into::into), company_id: None, deal_id: deal_id.map(Into::into), created_at: None, backend: "salesforce".into() })
     }
+
+    async fn delete_contact(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{}/services/data/v59.0/sobjects/Contact/{id}", self.instance_url)).bearer_auth(&self.token).send().await?.error_for_status()?; Ok(())
+    }
+    async fn delete_deal(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{}/services/data/v59.0/sobjects/Opportunity/{id}", self.instance_url)).bearer_auth(&self.token).send().await?.error_for_status()?; Ok(())
+    }
+    async fn associate_contact_company(&self, contact_id: &str, company_id: &str) -> Result<()> {
+        self.patch(&format!("sobjects/Contact/{contact_id}"), &serde_json::json!({"AccountId": company_id})).await
+    }
+    async fn associate_deal_contact(&self, deal_id: &str, contact_id: &str) -> Result<()> {
+        self.post("sobjects/OpportunityContactRole", &serde_json::json!({"OpportunityId": deal_id, "ContactId": contact_id})).await?; Ok(())
+    }
+    async fn list_deal_contacts(&self, deal_id: &str) -> Result<Vec<Contact>> {
+        let resp = self.query(&format!("SELECT ContactId,Contact.FirstName,Contact.LastName,Contact.Email FROM OpportunityContactRole WHERE OpportunityId = '{deal_id}'")).await?;
+        Ok(resp["records"].as_array().map(|a| a.iter().map(|r| Contact { id: r["ContactId"].as_str().unwrap_or("").into(), first_name: r["Contact"]["FirstName"].as_str().map(Into::into), last_name: r["Contact"]["LastName"].as_str().map(Into::into), email: r["Contact"]["Email"].as_str().map(Into::into), phone: None, company_id: None, company_name: None, title: None, backend: "salesforce".into() }).collect()).unwrap_or_default())
+    }
+    async fn search_companies(&self, query: &str, limit: u32) -> Result<Vec<Company>> {
+        let escaped = query.replace('\'', "\\'");
+        let resp = self.query(&format!("SELECT Id,Name,Website,Industry FROM Account WHERE Name LIKE '%{escaped}%' LIMIT {limit}")).await?;
+        Ok(resp["records"].as_array().map(|a| a.iter().map(|c| Company { id: c["Id"].as_str().unwrap_or("").into(), name: c["Name"].as_str().unwrap_or("").into(), domain: sf_str(c, "Website"), industry: sf_str(c, "Industry"), phone: None, city: None, country: None, backend: "salesforce".into() }).collect()).unwrap_or_default())
+    }
+    async fn search_deals(&self, query: &str, limit: u32) -> Result<Vec<Deal>> {
+        let escaped = query.replace('\'', "\\'");
+        let resp = self.query(&format!("SELECT Id,Name,StageName,Amount,CloseDate FROM Opportunity WHERE Name LIKE '%{escaped}%' LIMIT {limit}")).await?;
+        Ok(resp["records"].as_array().map(|a| a.iter().map(|d| Deal { id: d["Id"].as_str().unwrap_or("").into(), name: d["Name"].as_str().unwrap_or("").into(), stage: sf_str(d, "StageName"), pipeline: None, amount: d["Amount"].as_f64(), currency: None, contact_id: None, company_id: None, close_date: sf_str(d, "CloseDate"), probability: None, status: None, backend: "salesforce".into() }).collect()).unwrap_or_default())
+    }
+    async fn update_activity(&self, id: &str, done: Option<bool>, subject: Option<&str>) -> Result<Activity> {
+        let mut body = serde_json::json!({});
+        if let Some(d) = done { body["Status"] = if d { "Completed" } else { "Not Started" }.into(); }
+        if let Some(s) = subject { body["Subject"] = s.into(); }
+        self.patch(&format!("sobjects/Task/{id}"), &body).await?;
+        Ok(Activity { id: id.into(), activity_type: "task".into(), subject: subject.map(Into::into), body: None, contact_id: None, deal_id: None, done: done.unwrap_or(false), due_date: None, backend: "salesforce".into() })
+    }
 }

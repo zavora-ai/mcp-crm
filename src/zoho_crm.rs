@@ -152,4 +152,36 @@ impl CrmBackend for ZohoCrmBackend {
         let resp = self.post(&path, &serde_json::json!({"data": [{"Note_Content": content}]})).await?;
         Ok(Note { id: resp["data"][0]["details"]["id"].as_str().unwrap_or("").into(), content: content.into(), contact_id: contact_id.map(Into::into), company_id: None, deal_id: deal_id.map(Into::into), created_at: None, backend: "zoho_crm".into() })
     }
+
+    async fn delete_contact(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{BASE}/Contacts/{id}")).header("Authorization", format!("Zoho-oauthtoken {}", self.token)).send().await?.error_for_status()?; Ok(())
+    }
+    async fn delete_deal(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{BASE}/Deals/{id}")).header("Authorization", format!("Zoho-oauthtoken {}", self.token)).send().await?.error_for_status()?; Ok(())
+    }
+    async fn associate_contact_company(&self, contact_id: &str, company_id: &str) -> Result<()> {
+        self.put("Contacts", &serde_json::json!({"data": [{"id": contact_id, "Account_Name": {"id": company_id}}]})).await?; Ok(())
+    }
+    async fn associate_deal_contact(&self, deal_id: &str, contact_id: &str) -> Result<()> {
+        self.put("Deals", &serde_json::json!({"data": [{"id": deal_id, "Contact_Name": {"id": contact_id}}]})).await?; Ok(())
+    }
+    async fn list_deal_contacts(&self, deal_id: &str) -> Result<Vec<Contact>> {
+        let resp = self.get(&format!("Deals/{deal_id}/Contacts")).await.unwrap_or(serde_json::json!({"data": []}));
+        Ok(resp["data"].as_array().map(|a| a.iter().map(|c| Contact { id: c["id"].as_str().unwrap_or("").into(), first_name: z(c, "First_Name"), last_name: z(c, "Last_Name"), email: z(c, "Email"), phone: z(c, "Phone"), company_id: None, company_name: None, title: None, backend: "zoho_crm".into() }).collect()).unwrap_or_default())
+    }
+    async fn search_companies(&self, query: &str, limit: u32) -> Result<Vec<Company>> {
+        let resp = self.get(&format!("Accounts/search?criteria=(Account_Name:contains:{query})&per_page={limit}")).await.unwrap_or(serde_json::json!({"data": []}));
+        Ok(resp["data"].as_array().map(|a| a.iter().map(|c| Company { id: c["id"].as_str().unwrap_or("").into(), name: c["Account_Name"].as_str().unwrap_or("").into(), domain: z(c, "Website"), industry: z(c, "Industry"), phone: z(c, "Phone"), city: None, country: None, backend: "zoho_crm".into() }).collect()).unwrap_or_default())
+    }
+    async fn search_deals(&self, query: &str, limit: u32) -> Result<Vec<Deal>> {
+        let resp = self.get(&format!("Deals/search?criteria=(Deal_Name:contains:{query})&per_page={limit}")).await.unwrap_or(serde_json::json!({"data": []}));
+        Ok(resp["data"].as_array().map(|a| a.iter().map(|d| Deal { id: d["id"].as_str().unwrap_or("").into(), name: d["Deal_Name"].as_str().unwrap_or("").into(), stage: z(d, "Stage"), pipeline: None, amount: d["Amount"].as_f64(), currency: None, contact_id: None, company_id: None, close_date: z(d, "Closing_Date"), probability: None, status: None, backend: "zoho_crm".into() }).collect()).unwrap_or_default())
+    }
+    async fn update_activity(&self, id: &str, done: Option<bool>, subject: Option<&str>) -> Result<Activity> {
+        let mut rec = serde_json::json!({"id": id});
+        if let Some(d) = done { rec["Status"] = if d { "Completed" } else { "Not Started" }.into(); }
+        if let Some(s) = subject { rec["Subject"] = s.into(); }
+        self.put("Tasks", &serde_json::json!({"data": [rec]})).await?;
+        Ok(Activity { id: id.into(), activity_type: "task".into(), subject: subject.map(Into::into), body: None, contact_id: None, deal_id: None, done: done.unwrap_or(false), due_date: None, backend: "zoho_crm".into() })
+    }
 }

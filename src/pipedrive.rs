@@ -158,4 +158,36 @@ impl CrmBackend for PipedriveBackend {
         let resp = self.post("notes", &body).await?;
         Ok(Note { id: resp["data"]["id"].as_i64().map(|i| i.to_string()).unwrap_or_default(), content: content.into(), contact_id: contact_id.map(Into::into), company_id: company_id.map(Into::into), deal_id: deal_id.map(Into::into), created_at: None, backend: "pipedrive".into() })
     }
+
+    async fn delete_contact(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{BASE}/persons/{id}?api_token={}", self.token)).send().await?.error_for_status()?; Ok(())
+    }
+    async fn delete_deal(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{BASE}/deals/{id}?api_token={}", self.token)).send().await?.error_for_status()?; Ok(())
+    }
+    async fn associate_contact_company(&self, contact_id: &str, company_id: &str) -> Result<()> {
+        self.put(&format!("persons/{contact_id}"), &serde_json::json!({"org_id": company_id.parse::<i64>().unwrap_or(0)})).await?; Ok(())
+    }
+    async fn associate_deal_contact(&self, deal_id: &str, contact_id: &str) -> Result<()> {
+        self.put(&format!("deals/{deal_id}"), &serde_json::json!({"person_id": contact_id.parse::<i64>().unwrap_or(0)})).await?; Ok(())
+    }
+    async fn list_deal_contacts(&self, deal_id: &str) -> Result<Vec<Contact>> {
+        let resp = self.get_simple(&format!("deals/{deal_id}/participants")).await.unwrap_or(serde_json::json!({"data": []}));
+        Ok(resp["data"].as_array().map(|a| a.iter().map(|p| Contact { id: p["person"]["id"].as_i64().map(|i| i.to_string()).unwrap_or_default(), first_name: p["person"]["first_name"].as_str().map(Into::into), last_name: p["person"]["last_name"].as_str().map(Into::into), email: p["person"]["email"].as_array().and_then(|e| e.first()).and_then(|e| e["value"].as_str()).map(Into::into), phone: None, company_id: None, company_name: None, title: None, backend: "pipedrive".into() }).collect()).unwrap_or_default())
+    }
+    async fn search_companies(&self, query: &str, limit: u32) -> Result<Vec<Company>> {
+        let resp = self.get(&format!("organizations/search?term={query}&limit={limit}")).await?;
+        Ok(resp["data"]["items"].as_array().map(|a| a.iter().map(|item| { let c = &item["item"]; Company { id: c["id"].as_i64().map(|i| i.to_string()).unwrap_or_default(), name: c["name"].as_str().unwrap_or("").into(), domain: None, industry: None, phone: None, city: None, country: None, backend: "pipedrive".into() }}).collect()).unwrap_or_default())
+    }
+    async fn search_deals(&self, query: &str, limit: u32) -> Result<Vec<Deal>> {
+        let resp = self.get(&format!("deals/search?term={query}&limit={limit}")).await?;
+        Ok(resp["data"]["items"].as_array().map(|a| a.iter().map(|item| { let d = &item["item"]; Deal { id: d["id"].as_i64().map(|i| i.to_string()).unwrap_or_default(), name: d["title"].as_str().unwrap_or("").into(), stage: None, pipeline: None, amount: d["value"].as_f64(), currency: pd(d, "currency"), contact_id: None, company_id: None, close_date: None, probability: None, status: pd(d, "status"), backend: "pipedrive".into() }}).collect()).unwrap_or_default())
+    }
+    async fn update_activity(&self, id: &str, done: Option<bool>, subject: Option<&str>) -> Result<Activity> {
+        let mut body = serde_json::json!({});
+        if let Some(d) = done { body["done"] = if d { 1 } else { 0 }.into(); }
+        if let Some(s) = subject { body["subject"] = s.into(); }
+        self.put(&format!("activities/{id}"), &body).await?;
+        Ok(Activity { id: id.into(), activity_type: "task".into(), subject: subject.map(Into::into), body: None, contact_id: None, deal_id: None, done: done.unwrap_or(false), due_date: None, backend: "pipedrive".into() })
+    }
 }

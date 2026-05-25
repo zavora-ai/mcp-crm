@@ -141,4 +141,40 @@ impl CrmBackend for HubSpotBackend {
         if let Some(d) = deal_id { let _ = self.post(&format!("crm/v3/objects/notes/{id}/associations/deals/{d}/note_to_deal"), &serde_json::json!({})).await; }
         Ok(Note { id, content: content.into(), contact_id: contact_id.map(Into::into), company_id: None, deal_id: deal_id.map(Into::into), created_at: None, backend: "hubspot".into() })
     }
+
+    async fn delete_contact(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{BASE}/crm/v3/objects/contacts/{id}")).bearer_auth(&self.token).send().await?.error_for_status()?; Ok(())
+    }
+    async fn delete_deal(&self, id: &str) -> Result<()> {
+        self.http.delete(format!("{BASE}/crm/v3/objects/deals/{id}")).bearer_auth(&self.token).send().await?.error_for_status()?; Ok(())
+    }
+    async fn associate_contact_company(&self, contact_id: &str, company_id: &str) -> Result<()> {
+        self.post(&format!("crm/v3/objects/contacts/{contact_id}/associations/companies/{company_id}/contact_to_company"), &serde_json::json!({})).await?; Ok(())
+    }
+    async fn associate_deal_contact(&self, deal_id: &str, contact_id: &str) -> Result<()> {
+        self.post(&format!("crm/v3/objects/deals/{deal_id}/associations/contacts/{contact_id}/deal_to_contact"), &serde_json::json!({})).await?; Ok(())
+    }
+    async fn list_deal_contacts(&self, deal_id: &str) -> Result<Vec<Contact>> {
+        let resp = self.get(&format!("crm/v3/objects/deals/{deal_id}/associations/contacts")).await?;
+        let mut contacts = Vec::new();
+        for item in resp["results"].as_array().unwrap_or(&vec![]) {
+            if let Some(id) = item["id"].as_str() { if let Ok(c) = self.get_contact(id).await { contacts.push(c); } }
+        }
+        Ok(contacts)
+    }
+    async fn search_companies(&self, query: &str, limit: u32) -> Result<Vec<Company>> {
+        let resp = self.post("crm/v3/objects/companies/search", &serde_json::json!({"query": query, "limit": limit, "properties": ["name", "domain", "industry", "phone", "city", "country"]})).await?;
+        Ok(resp["results"].as_array().map(|a| a.iter().map(|c| Company { id: c["id"].as_str().unwrap_or("").into(), name: hs_prop(c, "name").unwrap_or_default(), domain: hs_prop(c, "domain"), industry: hs_prop(c, "industry"), phone: hs_prop(c, "phone"), city: hs_prop(c, "city"), country: hs_prop(c, "country"), backend: "hubspot".into() }).collect()).unwrap_or_default())
+    }
+    async fn search_deals(&self, query: &str, limit: u32) -> Result<Vec<Deal>> {
+        let resp = self.post("crm/v3/objects/deals/search", &serde_json::json!({"query": query, "limit": limit, "properties": ["dealname", "dealstage", "pipeline", "amount", "closedate"]})).await?;
+        Ok(resp["results"].as_array().map(|a| a.iter().map(|d| Deal { id: d["id"].as_str().unwrap_or("").into(), name: hs_prop(d, "dealname").unwrap_or_default(), stage: hs_prop(d, "dealstage"), pipeline: hs_prop(d, "pipeline"), amount: hs_prop(d, "amount").and_then(|s| s.parse().ok()), currency: None, contact_id: None, company_id: None, close_date: hs_prop(d, "closedate"), probability: None, status: None, backend: "hubspot".into() }).collect()).unwrap_or_default())
+    }
+    async fn update_activity(&self, id: &str, done: Option<bool>, subject: Option<&str>) -> Result<Activity> {
+        let mut props = serde_json::json!({});
+        if let Some(d) = done { props["hs_task_status"] = if d { "COMPLETED" } else { "NOT_STARTED" }.into(); }
+        if let Some(s) = subject { props["hs_task_subject"] = s.into(); }
+        self.patch(&format!("crm/v3/objects/tasks/{id}"), &serde_json::json!({"properties": props})).await?;
+        Ok(Activity { id: id.into(), activity_type: "task".into(), subject: subject.map(Into::into), body: None, contact_id: None, deal_id: None, done: done.unwrap_or(false), due_date: None, backend: "hubspot".into() })
+    }
 }

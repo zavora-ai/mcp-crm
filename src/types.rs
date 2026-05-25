@@ -119,4 +119,20 @@ pub trait CrmBackend: Send + Sync {
     // Notes
     async fn list_notes(&self, contact_id: Option<&str>, deal_id: Option<&str>, limit: u32) -> anyhow::Result<Vec<Note>>;
     async fn create_note(&self, content: &str, contact_id: Option<&str>, company_id: Option<&str>, deal_id: Option<&str>) -> anyhow::Result<Note>;
+
+    // Delete
+    async fn delete_contact(&self, id: &str) -> anyhow::Result<()>;
+    async fn delete_deal(&self, id: &str) -> anyhow::Result<()>;
+
+    // Associations
+    async fn associate_contact_company(&self, contact_id: &str, company_id: &str) -> anyhow::Result<()>;
+    async fn associate_deal_contact(&self, deal_id: &str, contact_id: &str) -> anyhow::Result<()>;
+    async fn list_deal_contacts(&self, deal_id: &str) -> anyhow::Result<Vec<Contact>>;
+
+    // Search
+    async fn search_companies(&self, query: &str, limit: u32) -> anyhow::Result<Vec<Company>>;
+    async fn search_deals(&self, query: &str, limit: u32) -> anyhow::Result<Vec<Deal>>;
+
+    // Activity update
+    async fn update_activity(&self, id: &str, done: Option<bool>, subject: Option<&str>) -> anyhow::Result<Activity>;
 }

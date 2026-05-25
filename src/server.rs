@@ -35,6 +35,12 @@ pub struct PipelineInput { #[serde(default)] pub pipeline_id: Option<String> }
 pub struct ListNotesInput { #[serde(default)] pub contact_id: Option<String>, #[serde(default)] pub deal_id: Option<String>, #[serde(default = "d20")] pub limit: u32 }
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct CreateNoteInput { pub content: String, #[serde(default)] pub contact_id: Option<String>, #[serde(default)] pub company_id: Option<String>, #[serde(default)] pub deal_id: Option<String> }
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct AssociateInput { pub contact_id: String, pub company_id: String }
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct DealContactInput { pub deal_id: String, pub contact_id: String }
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct UpdateActivityInput { pub id: String, #[serde(default)] pub done: Option<bool>, #[serde(default)] pub subject: Option<String> }
 
 fn d20() -> u32 { 20 }
 
@@ -122,6 +128,38 @@ impl CrmServer {
     #[tool(description = "Add a note to a contact, company, or deal")]
     async fn create_note(&self, Parameters(i): Parameters<CreateNoteInput>) -> String {
         match self.backend.create_note(&i.content, i.contact_id.as_deref(), i.company_id.as_deref(), i.deal_id.as_deref()).await { Ok(v) => serde_json::to_string_pretty(&v).unwrap(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "Delete a contact by ID")]
+    async fn delete_contact(&self, Parameters(i): Parameters<IdInput>) -> String {
+        match self.backend.delete_contact(&i.id).await { Ok(()) => "Contact deleted".into(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "Delete a deal by ID")]
+    async fn delete_deal(&self, Parameters(i): Parameters<IdInput>) -> String {
+        match self.backend.delete_deal(&i.id).await { Ok(()) => "Deal deleted".into(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "Associate a contact with a company")]
+    async fn associate_contact_company(&self, Parameters(i): Parameters<AssociateInput>) -> String {
+        match self.backend.associate_contact_company(&i.contact_id, &i.company_id).await { Ok(()) => "Associated".into(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "Associate a deal with a contact")]
+    async fn associate_deal_contact(&self, Parameters(i): Parameters<DealContactInput>) -> String {
+        match self.backend.associate_deal_contact(&i.deal_id, &i.contact_id).await { Ok(()) => "Associated".into(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "List contacts associated with a deal")]
+    async fn list_deal_contacts(&self, Parameters(i): Parameters<IdInput>) -> String {
+        match self.backend.list_deal_contacts(&i.id).await { Ok(v) => serde_json::to_string_pretty(&v).unwrap(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "Search companies by name or domain")]
+    async fn search_companies(&self, Parameters(i): Parameters<SearchInput>) -> String {
+        match self.backend.search_companies(&i.query, i.limit).await { Ok(v) => serde_json::to_string_pretty(&v).unwrap(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "Search deals by name, stage, or value")]
+    async fn search_deals(&self, Parameters(i): Parameters<SearchInput>) -> String {
+        match self.backend.search_deals(&i.query, i.limit).await { Ok(v) => serde_json::to_string_pretty(&v).unwrap(), Err(e) => format!("Error: {e}") }
+    }
+    #[tool(description = "Update an activity (mark done, change subject)")]
+    async fn update_activity(&self, Parameters(i): Parameters<UpdateActivityInput>) -> String {
+        match self.backend.update_activity(&i.id, i.done, i.subject.as_deref()).await { Ok(v) => serde_json::to_string_pretty(&v).unwrap(), Err(e) => format!("Error: {e}") }
     }
 }
 
