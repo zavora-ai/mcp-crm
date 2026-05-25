@@ -1,0 +1,163 @@
+server_id = "mcp_crm"
+display_name = "CRM"
+version = "1.0.0"
+domain = "business-systems"
+sdk_version = "0.1.0"
+risk_level = "medium"
+writes_allowed = "gated"
+transports = ["stdio"]
+credentials = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+governance_gates = ["crm-write-policy"]
+environments = ["development", "staging", "production"]
+
+# ─── Contacts ─────────────────────────────────────────────────────────────────
+
+[[tools]]
+name = "list_contacts"
+description = "List contacts with optional search query"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "get_contact"
+description = "Get a contact by ID"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "create_contact"
+description = "Create a new contact"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "update_contact"
+description = "Update an existing contact"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "search_contacts"
+description = "Search contacts by name, email, or custom query"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+# ─── Companies ────────────────────────────────────────────────────────────────
+
+[[tools]]
+name = "list_companies"
+description = "List companies/accounts"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "get_company"
+description = "Get a company by ID"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "create_company"
+description = "Create a new company/account"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "update_company"
+description = "Update an existing company"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+# ─── Deals ────────────────────────────────────────────────────────────────────
+
+[[tools]]
+name = "list_deals"
+description = "List deals/opportunities"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "get_deal"
+description = "Get a deal by ID with stage and value"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "create_deal"
+description = "Create a new deal/opportunity"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "update_deal"
+description = "Update a deal (stage, value, close date)"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "move_deal_stage"
+description = "Move a deal to a different pipeline stage"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+# ─── Activities ───────────────────────────────────────────────────────────────
+
+[[tools]]
+name = "list_activities"
+description = "List activities (calls, emails, meetings, tasks) for a record"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "create_activity"
+description = "Log an activity (call, email, meeting, task, note)"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+# ─── Pipelines ────────────────────────────────────────────────────────────────
+
+[[tools]]
+name = "list_pipelines"
+description = "List sales pipelines and their stages"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "get_pipeline_summary"
+description = "Get pipeline summary with deal counts and values per stage"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+# ─── Notes ────────────────────────────────────────────────────────────────────
+
+[[tools]]
+name = "list_notes"
+description = "List notes attached to a contact, company, or deal"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
+
+[[tools]]
+name = "create_note"
+description = "Add a note to a contact, company, or deal"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
