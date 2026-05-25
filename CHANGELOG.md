@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0] - 2026-05-25
+
+### Added
+- `delete_contact` — delete a contact by ID (external_write, requires approval)
+- `delete_deal` — delete a deal by ID (external_write, requires approval)
+- `associate_contact_company` — link a contact to a company
+- `associate_deal_contact` — link a deal to a contact
+- `list_deal_contacts` — list contacts associated with a deal
+- `search_companies` — search companies by name or domain
+- `search_deals` — search deals by name, stage, or value
+- `update_activity` — mark activities done, change subject
+
+### Changed
+- Total tools: 20 → 28
+
 ## [1.0.0] - 2026-05-25
 
 ### Added

@@ -5,7 +5,7 @@
 [![ADK-Rust Enterprise](https://img.shields.io/badge/ADK--Rust-Enterprise-purple.svg)](https://enterprise.adk-rust.com)
 [![Registry Ready](https://img.shields.io/badge/ADK_Registry-Ready-green.svg)](https://www.zavora.ai)
 
-The most complete multi-backend CRM MCP server. **20 tools** across **4 backends** — Salesforce, HubSpot, Zoho CRM, and Pipedrive. Unified contacts, companies, deals, activities, pipelines, and notes. Single Rust binary with feature-flagged backends and enterprise governance.
+Unified CRM MCP server with **28 tools** across **4 backends** — Salesforce, HubSpot, Zoho CRM, and Pipedrive. Unified contacts, companies, deals, activities, pipelines, and notes with associations, search, and lifecycle management. Single Rust binary with feature-flagged backends and enterprise governance.
 
 ## Architecture
 
@@ -34,9 +34,9 @@ The most complete multi-backend CRM MCP server. **20 tools** across **4 backends
 | Agent-native (MCP) | ❌ | ❌ | ✅ |
 | Single binary | ❌ | ❌ | ✅ |
 
-## Tools (20)
+## Tools (28)
 
-### Contacts (5)
+### Contacts (6)
 
 | Tool | Purpose | Risk Class |
 |------|---------|------------|
@@ -45,8 +45,9 @@ The most complete multi-backend CRM MCP server. **20 tools** across **4 backends
 | `create_contact` | Create a new contact | Internal write |
 | `update_contact` | Update an existing contact | Internal write |
 | `search_contacts` | Search by name, email, or query | Read-only |
+| `delete_contact` | Delete a contact by ID | External write |
 
-### Companies (4)
+### Companies (5)
 
 | Tool | Purpose | Risk Class |
 |------|---------|------------|
@@ -54,8 +55,9 @@ The most complete multi-backend CRM MCP server. **20 tools** across **4 backends
 | `get_company` | Get a company by ID | Read-only |
 | `create_company` | Create a new company | Internal write |
 | `update_company` | Update an existing company | Internal write |
+| `search_companies` | Search companies by name or domain | Read-only |
 
-### Deals (5)
+### Deals (7)
 
 | Tool | Purpose | Risk Class |
 |------|---------|------------|
@@ -64,13 +66,16 @@ The most complete multi-backend CRM MCP server. **20 tools** across **4 backends
 | `create_deal` | Create a new deal | Internal write |
 | `update_deal` | Update deal (stage, value, close date) | Internal write |
 | `move_deal_stage` | Move a deal to a different pipeline stage | Internal write |
+| `search_deals` | Search deals by name, stage, or value | Read-only |
+| `delete_deal` | Delete a deal by ID | External write |
 
-### Activities (2)
+### Activities (3)
 
 | Tool | Purpose | Risk Class |
 |------|---------|------------|
 | `list_activities` | List activities for a contact or deal | Read-only |
 | `create_activity` | Log a call, email, meeting, task, or note | Internal write |
+| `update_activity` | Update an activity (mark done, change subject) | Internal write |
 
 ### Pipelines (2)
 
@@ -85,6 +90,14 @@ The most complete multi-backend CRM MCP server. **20 tools** across **4 backends
 |------|---------|------------|
 | `list_notes` | List notes for a contact, company, or deal | Read-only |
 | `create_note` | Add a note to a record | Internal write |
+
+### Associations (3)
+
+| Tool | Purpose | Risk Class |
+|------|---------|------------|
+| `associate_contact_company` | Link a contact to a company | Internal write |
+| `associate_deal_contact` | Link a deal to a contact | Internal write |
+| `list_deal_contacts` | List contacts associated with a deal | Read-only |
 
 ## Backends
 
@@ -101,12 +114,17 @@ The most complete multi-backend CRM MCP server. **20 tools** across **4 backends
 |-----------|:---:|:---:|:---:|:---:|
 | Contacts CRUD | ✅ | ✅ | ✅ | ✅ |
 | Contact search | ✅ (SOQL) | ✅ (native) | ✅ (criteria) | ✅ (term) |
+| Contact delete | ✅ | ✅ | ✅ | ✅ |
 | Companies CRUD | ✅ | ✅ | ✅ | ✅ |
+| Company search | ✅ (SOQL) | ✅ (native) | ✅ (criteria) | ✅ (term) |
 | Deals CRUD | ✅ | ✅ | ✅ | ✅ |
+| Deal search | ✅ (SOQL) | ✅ (native) | ✅ (criteria) | ✅ (term) |
+| Deal delete | ✅ | ✅ | ✅ | ✅ |
 | Pipeline stages | ✅ | ✅ | ✅ | ✅ (with counts) |
 | Activities | ✅ (Task) | ✅ (Engagement) | ✅ (Task) | ✅ (Activity) |
+| Activity update | ✅ | ✅ | ✅ | ✅ |
 | Notes | ✅ | ✅ | ✅ | ✅ |
-| Deal associations | ✅ | ✅ | ✅ | ✅ |
+| Associations | ✅ (ContactRole) | ✅ (v3 assoc) | ✅ (lookup) | ✅ (participants) |
 
 ### API Mapping
 
@@ -259,6 +277,12 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 "Create a contact for Sarah Chen at Acme, email sarah@acme.com"
 → create_contact(first_name: "Sarah", last_name: "Chen", email: "sarah@acme.com")
+
+"Link Sarah to the Acme company"
+→ associate_contact_company(contact_id: "sarah-id", company_id: "acme-id")
+
+"Delete the test contact"
+→ delete_contact(id: "test-id")
 ```
 
 ### Deal pipeline
@@ -266,8 +290,17 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 "Show me all open deals"
 → list_deals(limit: 50)
 
+"Search for deals related to enterprise"
+→ search_deals(query: "enterprise")
+
 "Create a $50k deal for the Acme enterprise contract"
 → create_deal(name: "Acme Enterprise", amount: 50000, stage: "Negotiation")
+
+"Link Sarah to the Acme deal"
+→ associate_deal_contact(deal_id: "deal-123", contact_id: "sarah-id")
+
+"Who's involved in the Acme deal?"
+→ list_deal_contacts(id: "deal-123")
 
 "Move the Acme deal to Closed Won"
 → move_deal_stage(id: "deal-123", stage: "closedwon")
@@ -276,10 +309,19 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 → get_pipeline_summary()
 ```
 
+### Companies
+```
+"Search for companies in fintech"
+→ search_companies(query: "fintech")
+```
+
 ### Activity logging
 ```
 "Log a call with Sarah about the proposal"
 → create_activity(activity_type: "call", subject: "Proposal discussion", contact_id: "sarah-id")
+
+"Mark that task as done"
+→ update_activity(id: "activity-id", done: true)
 
 "Show all activities for the Acme deal"
 → list_activities(deal_id: "deal-123")
@@ -305,7 +347,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 This server implements the [ADK MCP SDK](https://crates.io/crates/adk-mcp-sdk) contract:
 
 - **HealthCheck** — verifies backend connectivity on startup
-- **mcp-server.toml** — manifest with 20 tools, risk classes, and credential bindings
+- **mcp-server.toml** — manifest with 28 tools, risk classes, and credential bindings
 - **Manifest validation** — startup fails fast on invalid manifest (SDK 0.1.3+)
 - **Structured tracing** — `RUST_LOG` env-filter for observability
 
