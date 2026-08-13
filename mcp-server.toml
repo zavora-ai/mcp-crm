@@ -1,16 +1,14 @@
 server_id = "mcp_crm"
-display_name = "CRM"
-version = "1.1.1"
+display_name = "Crm"
+version = "1.2.0"
 domain = "business-systems"
-sdk_version = "0.1.0"
-risk_level = "medium"
+sdk_version = "0.2.0"
+risk_level = "high"
 writes_allowed = "gated"
 transports = ["stdio"]
 credentials = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
-governance_gates = ["crm-write-policy"]
+governance_gates = ["crm-write-policy", "mrtr_approval"]
 environments = ["development", "staging", "production"]
-
-# ─── Contacts ─────────────────────────────────────────────────────────────────
 
 [[tools]]
 name = "list_contacts"
@@ -47,8 +45,6 @@ risk_class = "read_only"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
 
-# ─── Companies ────────────────────────────────────────────────────────────────
-
 [[tools]]
 name = "list_companies"
 description = "List companies/accounts"
@@ -76,8 +72,6 @@ description = "Update an existing company"
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
-
-# ─── Deals ────────────────────────────────────────────────────────────────────
 
 [[tools]]
 name = "list_deals"
@@ -114,8 +108,6 @@ risk_class = "internal_write"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
 
-# ─── Activities ───────────────────────────────────────────────────────────────
-
 [[tools]]
 name = "list_activities"
 description = "List activities (calls, emails, meetings, tasks) for a record"
@@ -129,8 +121,6 @@ description = "Log an activity (call, email, meeting, task, note)"
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
-
-# ─── Pipelines ────────────────────────────────────────────────────────────────
 
 [[tools]]
 name = "list_pipelines"
@@ -146,8 +136,6 @@ risk_class = "read_only"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
 
-# ─── Notes ────────────────────────────────────────────────────────────────────
-
 [[tools]]
 name = "list_notes"
 description = "List notes attached to a contact, company, or deal"
@@ -162,8 +150,6 @@ risk_class = "internal_write"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
 
-# ─── Delete ───────────────────────────────────────────────────────────────────
-
 [[tools]]
 name = "delete_contact"
 description = "Delete a contact by ID"
@@ -177,8 +163,6 @@ description = "Delete a deal by ID"
 risk_class = "external_write"
 requires_approval = true
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
-
-# ─── Associations ─────────────────────────────────────────────────────────────
 
 [[tools]]
 name = "associate_contact_company"
@@ -201,8 +185,6 @@ risk_class = "read_only"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
 
-# ─── Search ───────────────────────────────────────────────────────────────────
-
 [[tools]]
 name = "search_companies"
 description = "Search companies by name or domain"
@@ -216,8 +198,6 @@ description = "Search deals by name, stage, or value"
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = ["vault://salesforce-oauth", "vault://hubspot-token", "vault://zoho-crm-token", "vault://pipedrive-token"]
-
-# ─── Activity Update ──────────────────────────────────────────────────────────
 
 [[tools]]
 name = "update_activity"

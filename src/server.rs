@@ -47,7 +47,7 @@ fn d20() -> u32 { 20 }
 #[derive(Clone)]
 pub struct CrmServer { pub backend: Arc<dyn CrmBackend> }
 
-#[tool_router(server_handler)]
+#[tool_router]
 impl CrmServer {
     #[tool(description = "List contacts with optional search query")]
     async fn list_contacts(&self, Parameters(i): Parameters<ListInput>) -> String {
@@ -171,4 +171,11 @@ impl HealthCheck for CrmServer {
             Err(e) => HealthStatus { healthy: false, message: Some(format!("{}: {e}", self.backend.name())), latency_ms: None },
         }
     }
+}
+
+adk_mcp_sdk::mcp_2026_server! {
+    server: CrmServer,
+    task_tools: [],
+    approval_tools: ["delete_contact", "delete_deal"],
+    cache_ttl_ms: 60_000,
 }
